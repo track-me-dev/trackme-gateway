@@ -1,0 +1,46 @@
+server:
+  port: 8080
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+spring:
+  application:
+    name: trackme-gateway
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+  config:
+    import: optional:configserver:http://127.0.0.1:8888
+  cloud:
+    config:
+      name: trackme-config
+    gateway:
+      routes:
+        - id: trackme-core
+          uri: lb://TRACKME-CORE
+          predicates:
+            - Path=/tracks/**
+          filters:
+            - RemoveRequestHeader=Cookie
+            - name: AuthorizationFilter
+              args:
+                baseMessage: authorization validating...
+                preLogger: true
+                postLogger: true
+        - id: trackme-user
+          uri: lb://TRACKME-USER
+          predicates:
+            - Path=/users/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, busrefresh
